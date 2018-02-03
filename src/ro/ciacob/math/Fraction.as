@@ -7,8 +7,13 @@ package ro.ciacob.math {
 	 */
 	public class Fraction {
 		
-		public static const WHOLE : Fraction = new Fraction(1,1);
-		public static const ZERO : Fraction = new Fraction(0,1);
+		public static function get WHOLE() : Fraction {
+			return new Fraction(1,1);
+		}
+		
+		public static function get ZERO() : Fraction {
+			return new Fraction(0,1);
+		}
 
 		/**
 		 * Convenience comparison method to be used when sorting arrays and similar
