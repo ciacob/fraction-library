@@ -1,11 +1,15 @@
 package ro.ciacob.math {
+	import eu.claudius.iacob.interfaces.IConfigurable;
+	import eu.claudius.iacob.interfaces.IRecyclable;
+	
 	import ro.ciacob.utils.NumberUtil;
+	import ro.ciacob.utils.Objects;
 
 	/**
 	 * Holds rational numbers in numerator/denominator form instead of floating point form.
 	 * Provides basic math operations.
 	 */
-	public class Fraction {
+	public class Fraction implements IFraction, IRecyclable, IConfigurable {
 		
 		public static function get WHOLE() : Fraction {
 			return new Fraction(1,1);
@@ -62,14 +66,14 @@ package ro.ciacob.math {
 		 * - new Fraction (whole : int, numerator : int, denominator : int);
 		 */
 		public function Fraction(... params) {
-			var tmpFract:Fraction;
+			var tmpFract:IFraction;
 			var tmpNum:int;
 			var haveArgError:Boolean;
 			if (params.length == 0) {
 				setValue(0, 1);
 			} else if (params.length == 1) {
-				if (params[0] is Fraction) {
-					tmpFract = (params[0] as Fraction);
+				if (params[0] is IFraction) {
+					tmpFract = (params[0] as IFraction);
 					setValue(tmpFract.numerator, tmpFract.denominator);
 				} else if (params[0] is int) {
 					setValue(params[0], 1);
@@ -98,8 +102,9 @@ package ro.ciacob.math {
 			}
 		}
 
+		private var _canBeReused:Boolean;
 		private var _denominator:int;
-
+		private var _isConfigured:Boolean;
 		private var _numerator:int;
 
 		/**
@@ -107,11 +112,11 @@ package ro.ciacob.math {
 		 * @param other		The fraction to add.
 		 * @return 			The addition result, as a new fraction.
 		 */
-		public function add (other:Fraction):Fraction {
+		public function add (other:IFraction):IFraction {
 			var lcd:int = NumberUtil.lcm(_denominator, other.denominator);
 			var quot1:int = lcd / _denominator;
 			var quot2:int = lcd / other.denominator;
-			var fract:Fraction = new Fraction;
+			var fract:IFraction = new Fraction;
 			fract.setValue(_numerator * quot1 + other.numerator * quot2, lcd);
 			return fract;
 		}
@@ -125,19 +130,19 @@ package ro.ciacob.math {
 		 * 
 		 * @return	A decimal value, such 0.5.
 		 */
-		public function getPercentageOf (other:Fraction):Number {
+		public function getPercentageOf (other:IFraction):Number {
 			return getFractionOf(other).floatValue;
 		}
 		
 		/**
-		 * Syntax sugar for "this.divide (other)".
+		 * Alias of "divide (otherFraction)".
 		 *  
 		 * @param	other
 		 * 			Another fraction to find out what fraction the current fraction represents of.
 		 * 
 		 * @return	A Fraction object, such 1/2.
 		 */
-		public function getFractionOf (other : Fraction) : Fraction {
+		public function getFractionOf (other : IFraction) : IFraction {
 			return this.divide (other);
 		}
 
@@ -153,8 +158,8 @@ package ro.ciacob.math {
 		 * @param other		The fraction to divide by.
 		 * @return
 		 */
-		public function divide(other:Fraction):Fraction {
-			return multiply(other.reciprocal);
+		public function divide(other:IFraction):IFraction {
+			return multiply (other.reciprocal);
 		}
 
 		/**
@@ -162,7 +167,7 @@ package ro.ciacob.math {
 		 * @param other		The fraction to test.
 		 * @return			The equality test result.
 		 */
-		public function equals(other:Fraction):Boolean {
+		public function equals(other:IFraction):Boolean {
 			return (_numerator == other.numerator && _denominator == other.denominator);
 		}
 
@@ -178,7 +183,7 @@ package ro.ciacob.math {
 		 * @param other		The fraction to test.
 		 * @return			The test result.
 		 */
-		public function greaterThan(other:Fraction):Boolean {
+		public function greaterThan (other:IFraction) : Boolean {
 			return (other.denominator * _numerator > _denominator * other.numerator);
 		}
 
@@ -187,19 +192,18 @@ package ro.ciacob.math {
 		 * @param other		The fraction to test.
 		 * @return			The test result.
 		 */
-		public function lessThan(other:Fraction):Boolean {
+		public function lessThan (other:IFraction) : Boolean {
 			return (other.denominator * _numerator < _denominator * other.numerator);
 		}
-
 
 		/**
 		 * Multiplies this fraction by another.
 		 * @param other		The fraction to multiply by.
 		 * @return			The multiplication result.
 		 */
-		public function multiply(other:Fraction):Fraction {
-			var fract:Fraction = new Fraction;
-			fract.setValue(_numerator * other.numerator, _denominator * other.denominator);
+		public function multiply (other:IFraction):IFraction {
+			var fract:IFraction = new Fraction;
+			fract.setValue (_numerator * other.numerator, _denominator * other.denominator);
 			return fract;
 		}
 
@@ -220,7 +224,7 @@ package ro.ciacob.math {
 		/**
 		 * @return		The reciprocal (inverse) of the fraction, where the numerator and denominator switch place.
 		 */
-		public function get reciprocal():Fraction {
+		public function get reciprocal() : IFraction {
 			return new Fraction(denominator, numerator);
 		}
 
@@ -231,13 +235,13 @@ package ro.ciacob.math {
 		 *
 		 * This is equivalent to calling setValue (5, 4);
 		 *
-		 * @param w		The new whole-number portion
-		 * @param pn	The new proper numerator, that is, a numerator that does not contain the whole-number portion.
-		 * @param d		The new denominator.
+		 * @param Whole				The new whole-number portion
+		 * @param ProperNumerator	The new proper numerator, that is, a numerator that does not contain the whole-number portion.
+		 * @param Denominator		The new denominator.
 		 */
-		public function setProperValue(w:int, pn:int, d:int):void {
-			var tmpNum:int = w * d + pn;
-			setValue(tmpNum, d);
+		public function setProperValue(Whole:int, ProperNumerator:int, Denominator:int):void {
+			var tmpNum : int = Whole * Denominator + ProperNumerator;
+			setValue(tmpNum, Denominator);
 		}
 
 		/**
@@ -245,9 +249,9 @@ package ro.ciacob.math {
 		 * @param n		The new numerator.
 		 * @param d		The new denominator.
 		 */
-		public function setValue(n:int, d:int):void {
-			_numerator = n;
-			_denominator = d;
+		public function setValue(Numerator:int, Denominator:int):void {
+			_numerator = Numerator;
+			_denominator = Denominator;
 			_normalize();
 		}
 
@@ -257,8 +261,8 @@ package ro.ciacob.math {
 		 * @param other		The fraction to subtract.
 		 * @return 			The subtraction result, as a new fraction.
 		 */
-		public function subtract(other:Fraction):Fraction {
-			var fract:Fraction = new Fraction;
+		public function subtract(other:IFraction):IFraction {
+			var fract:IFraction = new Fraction;
 			var lcd:int = NumberUtil.lcm(_denominator, other.denominator);
 			var quot1:int = lcd / _denominator;
 			var quot2:int = lcd / other.denominator;
@@ -273,7 +277,7 @@ package ro.ciacob.math {
 		 * @param other		The fraction to subtract.
 		 * @return 			The subtraction result, as a new fraction.
 		 */
-		public function subtractAbs (other : Fraction) : Fraction {
+		public function subtractAbs (other : IFraction) : IFraction {
 			if (other.greaterThan(this)) {
 				return other.subtract(this);
 			}
@@ -285,7 +289,7 @@ package ro.ciacob.math {
 		 * @see Object.toString()
 		 */
 		public function toString():String {
-			return (_numerator + '/' + _denominator);
+			return [ _numerator, _denominator].join('/');
 		}
 
 		/**
@@ -295,6 +299,67 @@ package ro.ciacob.math {
 			return (_numerator - properNumerator) / _denominator;
 		}
 
+
+		
+		
+		/**
+		 * @see IRecyclable.canBeReused
+		 */
+		public function get canBeReused () : Boolean {
+			return _canBeReused;
+		}
+		
+		/**
+		 * @see IRecyclable.
+		 */
+		public function purge() : void {
+			_numerator = 0;
+			_denominator = 1;
+			_isConfigured = false;
+			_canBeReused = true;
+		}
+		
+		/**
+		 * @see IConfigurable.configure
+		 * Expecting an Object like: { numerator: 1, denominator: 2 }. Failing to provide
+		 * correct fields and/or values will result in runtime errors.
+		 */
+		public function configure (configuration : Object): void {
+			var num : int;
+			var den : int;
+			if (!configuration) {
+				throw ("Fraction.configure(): empty argument provided");
+			}
+			Objects.assertExisting ('numerator', configuration);
+			Objects.assertExisting ('denominator', configuration);
+			if (!(configuration.numerator is int)) {
+				throw ("Fraction.configure(): non-int configuration.numerator argument provided");
+			}
+			if (!(configuration.denominator is int)) {
+				throw ("Fraction.configure(): non-int configuration.denominator argument provided");
+			}
+			num = configuration.numerator;
+			den = configuration.denominator;
+			if (isNaN(num)) {
+				throw ("Fraction.configure(): NaN configuration.numerator argument provided");
+			}
+			if (isNaN(den)) {
+				throw ("Fraction.configure(): NaN configuration.denominator argument provided");
+			}
+			_numerator = num;
+			_denominator = den;
+			_normalize();
+			_canBeReused = false;
+			_isConfigured = true;
+		}
+		
+		/**
+		 * @see IConfigurable.isConfigured
+		 */
+		public function get isConfigured () : Boolean {
+			return _isConfigured;
+		}
+		
 		/**
 		 * @private
 		 * Puts fraction into a standard form, unique for each mathematically different value.
