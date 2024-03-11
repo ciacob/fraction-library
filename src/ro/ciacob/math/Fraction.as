@@ -201,7 +201,7 @@ public class Fraction implements IFraction {
     }
 
     /**
-     * @return        The (aproximated) floating point value.
+     * @return        The (approximated) floating point value.
      */
     public function get floatValue():Number {
         return _numerator / _denominator;
@@ -258,7 +258,7 @@ public class Fraction implements IFraction {
     }
 
     /**
-     * Changes the fraction's compound value. You may specify a whole-number portion alogn with proper numerator and
+     * Changes the fraction's compound value. You may specify a whole-number portion along with proper numerator and
      * denominator. A proper numerator is a numerator that does not contain the whole-number portion. For example,
      * to set the value 1 1/4 (read one whole and one fourth) you will use: setProperValue (1, 1, 4).
      *
